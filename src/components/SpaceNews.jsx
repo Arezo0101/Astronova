@@ -29,7 +29,7 @@ export default function SpaceNews() {
   };
 
   useEffect(() => {
-    fetchNews();
+    SpaceNews();
   }, []);
 
   return (
