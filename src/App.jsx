@@ -23,7 +23,7 @@ import MyCosmicJourney from "./components/MyCosmicJourney";
 import MissionControl from "./components/MissionControl";
 import CosmicDiscovery from "./components/CosmicDiscovery";
 import CosmicWeather from "./components/CosmicWeather";
-import SpaceNews from "./components/SpaceNews";
+{/*import SpaceNews from "./components/SpaceNews";*/}
 import CosmicProfile from "./components/CosmicProfile";
 
 const planets = [
@@ -709,7 +709,7 @@ export default function App() {
         </section>
 
         <section id="space-news" className="scroll-mt-24">
-          <SpaceNews />
+          {/*<SpaceNews /> */} 
         </section>
 
         <section id="cosmic-profile" className="scroll-mt-24">
