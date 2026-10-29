@@ -1,18 +1,18 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   ArrowDown,
   ArrowRight,
   ArrowUpRight,
   Atom,
+  Bookmark,
   Menu,
-  Orbit,
   Play,
+  Orbit,
   Rocket,
   Search,
   Sparkles,
   Telescope,
   X,
-  Bookmark,
 } from "lucide-react";
 
 import SolarSystem3D from "./components/SolarSystem3D";
@@ -23,753 +23,660 @@ import MyCosmicJourney from "./components/MyCosmicJourney";
 import MissionControl from "./components/MissionControl";
 import CosmicDiscovery from "./components/CosmicDiscovery";
 import CosmicWeather from "./components/CosmicWeather";
-{/*import SpaceNews from "./components/SpaceNews";*/}
 import CosmicProfile from "./components/CosmicProfile";
 
 const planets = [
   {
     name: "Mercury",
     type: "Terrestrial planet",
-    color: "#9CA3AF",
-    image:
-      "https://images.unsplash.com/photo-1614728894747-a83421e2b9c9?auto=format&fit=crop&w=700&q=85",
-    description:
-      "The smallest planet in our solar system and the closest to the Sun.",
-    distance: "57.9M km",
-    moons: "0",
+    description: "The smallest planet, racing around the Sun in just 88 days.",
+    color: "from-slate-300 to-slate-500",
+    distance: "57.9 million km",
+    icon: "☿",
   },
   {
     name: "Venus",
     type: "Terrestrial planet",
-    color: "#F5B971",
-    image:
-      "https://images.unsplash.com/photo-1614732484003-ef9881555dc3?auto=format&fit=crop&w=700&q=85",
-    description:
-      "A world of extreme heat, thick clouds, and a fascinating atmosphere.",
-    distance: "108.2M km",
-    moons: "0",
+    description: "A world of crushing pressure and extreme surface temperatures.",
+    color: "from-amber-200 to-orange-500",
+    distance: "108.2 million km",
+    icon: "♀",
   },
   {
     name: "Earth",
-    type: "Our home",
-    color: "#60A5FA",
-    image:
-      "https://images.unsplash.com/photo-1614730321146-b6fa6a46bcb4?auto=format&fit=crop&w=700&q=85",
-    description:
-      "Our pale blue home, the only world currently known to support life.",
-    distance: "149.6M km",
-    moons: "1",
+    type: "Terrestrial planet",
+    description: "Our home planet, the only world currently known to support life.",
+    color: "from-sky-400 to-blue-700",
+    distance: "149.6 million km",
+    icon: "🌍",
   },
   {
     name: "Mars",
-    type: "The red planet",
-    color: "#F87171",
-    image:
-      "https://images.unsplash.com/photo-1614728263952-84ea256f9679?auto=format&fit=crop&w=700&q=85",
-    description:
-      "A cold desert world with ancient river valleys and a history worth exploring.",
-    distance: "227.9M km",
-    moons: "2",
+    type: "Terrestrial planet",
+    description: "A cold desert with ancient river valleys and towering volcanoes.",
+    color: "from-orange-400 to-red-700",
+    distance: "227.9 million km",
+    icon: "♂",
   },
+  {
+    name: "Jupiter",
+    type: "Gas giant",
+    description: "The largest planet, home to immense storms and many moons.",
+    color: "from-orange-200 to-amber-700",
+    distance: "778.6 million km",
+    icon: "♃",
+  },
+  {
+    name: "Saturn",
+    type: "Gas giant",
+    description: "A giant planet famous for its spectacular rings.",
+    color: "from-yellow-200 to-yellow-600",
+    distance: "1.43 billion km",
+    icon: "♄",
+  },
+  {
+    name: "Uranus",
+    type: "Ice giant",
+    description: "An icy world that rotates on a dramatically tilted axis.",
+    color: "from-cyan-200 to-teal-600",
+    distance: "2.87 billion km",
+    icon: "♅",
+  },
+  {
+    name: "Neptune",
+    type: "Ice giant",
+    description: "A distant blue planet with some of the fastest winds in the Solar System.",
+    color: "from-blue-400 to-indigo-800",
+    distance: "4.50 billion km",
+    icon: "♆",
+  },
+];
+const navItems = [
+  { label: "Home", id: "home" },
+  { label: "Discover", id: "discover" },
+  { label: "Planets", id: "planets" },
+  { label: "Missions", id: "missions" },
 ];
 
 const discoveries = [
   {
     number: "01",
-    title: "Explore the planets",
-    description:
-      "Travel through our solar system and discover what makes every planet unique.",
+    title: "Explore the universe",
+    description: "Discover planets, galaxies, and extraordinary cosmic objects.",
     icon: Orbit,
-    label: "SOLAR SYSTEM",
-    target: "#planets",
+    target: "cosmic-discovery",
   },
   {
     number: "02",
-    title: "Discover deep space",
-    description:
-      "Explore distant galaxies, mysterious nebulae, and the wonders beyond our home.",
-    icon: Sparkles,
-    label: "DEEP UNIVERSE",
-    target: "#cosmic-discovery",
+    title: "Learn through challenges",
+    description: "Test your astronomy knowledge with interactive quizzes.",
+    icon: Atom,
+    target: "cosmic-challenge",
   },
   {
     number: "03",
     title: "Follow space missions",
-    description:
-      "Learn about the missions pushing the boundaries of human knowledge.",
+    description: "Explore real missions and the science behind them.",
     icon: Rocket,
-    label: "SPACE MISSIONS",
-    target: "#missions",
+    target: "missions",
   },
 ];
 
-function SectionLabel({ children }) {
-  return (
-    <div className="mb-4 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.22em] text-yellow-400">
-      <span className="h-1.5 w-1.5 rounded-full bg-yellow-400" />
-      {children}
-    </div>
-  );
+function readSavedPlanets() {
+  try {
+    const stored = JSON.parse(
+      localStorage.getItem("astronova-planets") || "[]"
+    );
+
+    return Array.isArray(stored) ? stored : [];
+  } catch {
+    return [];
+  }
 }
 
 export default function App() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [savedPlanets, setSavedPlanets] = useState(() => {
-    try {
-      return JSON.parse(localStorage.getItem("astronova-planets") || "[]");
-    } catch {
-      return [];
-    }
-  });
+  const [headerSearch, setHeaderSearch] = useState("");
+  const [planetSearch, setPlanetSearch] = useState("");
+  const [savedPlanets, setSavedPlanets] = useState(readSavedPlanets);
+  const filteredPlanets = useMemo(() => {
+    const term = planetSearch.trim().toLowerCase();
 
-  const filteredPlanets = planets.filter((planet) =>
-    planet.name.toLowerCase().includes(searchTerm.trim().toLowerCase())
-  );
+    if (!term) return planets;
 
-  const goToSection = (id) => {
+    return planets.filter((planet) =>
+      [
+        planet.name,
+        planet.type,
+        planet.description,
+        planet.distance,
+      ]
+        .join(" ")
+        .toLowerCase()
+        .includes(term)
+    );
+  }, [planetSearch]);
+
+  const headerResults = useMemo(() => {
+    const term = headerSearch.trim().toLowerCase();
+
+    if (!term) return [];
+
+    return [
+      ...planets
+        .filter((planet) =>
+          `${planet.name} ${planet.type} ${planet.description}`
+            .toLowerCase()
+            .includes(term)
+        )
+        .map((planet) => ({
+          title: planet.name,
+          description: planet.type,
+          target: "planets",
+        })),
+      ...discoveries
+        .filter((item) =>
+          `${item.title} ${item.description}`.toLowerCase().includes(term)
+        )
+        .map((item) => ({
+          title: item.title,
+          description: item.description,
+          target: item.target,
+        })),
+    ].slice(0, 7);
+  }, [headerSearch]);
+
+  function goToSection(id) {
     document.getElementById(id)?.scrollIntoView({
       behavior: "smooth",
       block: "start",
     });
-
     setMenuOpen(false);
     setSearchOpen(false);
-  };
+  }
 
-  const toggleSavedPlanet = (name) => {
-    setSavedPlanets((previous) => {
-      const updated = previous.includes(name)
-        ? previous.filter((planet) => planet !== name)
-        : [...previous, name];
+  function toggleSavedPlanet(name) {
+    setSavedPlanets((current) => {
+      const updated = current.includes(name)
+        ? current.filter((planet) => planet !== name)
+        : [...current, name];
 
       try {
         localStorage.setItem("astronova-planets", JSON.stringify(updated));
-      } catch {
-        // The app remains usable if browser storage is unavailable.
+      } catch (error) {
+        console.error("Could not save favorite planets:", error);
       }
 
       return updated;
     });
-  };
-
-  const navItems = [
-    ["Home", "home"],
-    ["Discover", "discover"],
-    ["Planets", "planets"],
-    ["Missions", "missions"],
-  ];
+  }
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-[#080B14] text-slate-100">
-      {/* Navigation */}
-      <header className="sticky top-0 z-40 border-b border-white/[0.07] bg-[#080B14]/95 backdrop-blur-xl">
-        <div className="mx-auto flex h-[76px] max-w-7xl items-center justify-between px-5 sm:px-8 lg:px-12">
+    <div className="min-h-screen overflow-x-hidden bg-[#080b14] text-slate-100">
+      <header className="sticky top-0 z-50 border-b border-white/10 bg-[#080b14]/90 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-4 lg:px-8">
           <button
-            onClick={() => goToSection("home")}
-            className="group flex items-center gap-3 text-left"
-            aria-label="Astronova home"
-          >
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-yellow-400 text-slate-950 transition-transform group-hover:rotate-12">
-              <Orbit size={23} strokeWidth={2.4} />
-            </div>
+  type="button"
+  onClick={() => goToSection("home")}
+  className="flex shrink-0 items-center gap-2 text-xl font-black tracking-tight"
+  aria-label="Astronova home"
+>
+  <span className="flex h-10 w-10 items-center justify-center text-yellow-400">
+  <Orbit size={34} strokeWidth={2.2} />
+</span>
 
-            <div>
-              <div className="text-xl font-black tracking-tight">
-                ASTRO<span className="text-yellow-400">NOVA</span>
-              </div>
-              <div className="mt-0.5 text-[9px] font-medium uppercase tracking-[0.3em] text-slate-500">
-                Explore beyond
-              </div>
-            </div>
-          </button>
+  <span className="text-2xl font-black tracking-tight">
+    Astro<span className="text-yellow-400">nova</span>
+  </span>
+</button>
 
-          <nav className="hidden items-center gap-8 md:flex">
-            {navItems.map(([label, id]) => (
+          <nav className="hidden items-center gap-7 md:flex">
+            {navItems.map((item) => (
               <button
-                key={id}
-                onClick={() => goToSection(id)}
-                className="text-sm text-slate-400 transition hover:text-yellow-400"
+                type="button"
+                key={item.id}
+                onClick={() => goToSection(item.id)}
+                className="text-sm text-slate-300 transition hover:text-yellow-400"
               >
-                {label}
+                {item.label}
               </button>
             ))}
           </nav>
-
-          <div className="hidden items-center gap-3 md:flex">
+          <div className="flex items-center gap-2">
             <button
-              onClick={() => {
-                setSearchOpen((open) => !open);
-                setSearchTerm("");
-              }}
-              className="rounded-xl border border-white/10 p-2.5 text-slate-300 transition hover:border-yellow-400/50 hover:text-yellow-400"
-              aria-label="Open planet search"
-              aria-expanded={searchOpen}
+              type="button"
+              onClick={() => setSearchOpen((open) => !open)}
+              className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 hover:border-yellow-400/50"
+              aria-label="Search Astronova"
             >
-              {searchOpen ? <X size={18} /> : <Search size={18} />}
+              {searchOpen ? <X size={19} /> : <Search size={19} />}
             </button>
 
             <button
-              onClick={() => goToSection("solar-system")}
-              className="flex items-center gap-2 rounded-xl bg-yellow-400 px-5 py-3 text-sm font-bold text-slate-950 transition hover:bg-yellow-300"
+              type="button"
+              onClick={() => goToSection("my-journey")}
+              className="hidden rounded-xl bg-yellow-400 px-4 py-2.5 text-sm font-bold text-slate-950 transition hover:bg-yellow-300 sm:block"
             >
-              Start exploring <ArrowUpRight size={16} />
+              My Journey
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setMenuOpen((open) => !open)}
+              className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 md:hidden"
+              aria-label={menuOpen ? "Close menu" : "Open menu"}
+            >
+              {menuOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
           </div>
-
-          <button
-            onClick={() => setMenuOpen((open) => !open)}
-            className="rounded-lg border border-white/10 p-2 md:hidden"
-            aria-label={menuOpen ? "Close navigation" : "Open navigation"}
-          >
-            {menuOpen ? <X size={22} /> : <Menu size={22} />}
-          </button>
         </div>
-
-        {menuOpen && (
-          <nav className="border-t border-white/10 bg-[#0D1220] px-5 py-4 md:hidden">
-            {navItems.map(([label, id]) => (
-              <button
-                key={id}
-                onClick={() => goToSection(id)}
-                className="block w-full border-b border-white/[0.06] py-3 text-left text-sm text-slate-300 hover:text-yellow-400"
-              >
-                {label}
-              </button>
-            ))}
-
-            <button
-              onClick={() => {
-                setMenuOpen(false);
-                setSearchOpen(true);
-              }}
-              className="flex w-full items-center gap-2 py-3 text-sm text-yellow-400"
-            >
-              <Search size={17} /> Search planets
-            </button>
-          </nav>
-        )}
-
         {searchOpen && (
-          <div className="absolute right-5 top-[84px] z-50 w-[calc(100%-40px)] max-w-sm rounded-2xl border border-white/10 bg-[#111827] p-4 shadow-2xl sm:right-8 lg:right-12">
-            <label
-              htmlFor="planet-search"
-              className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-400"
-            >
-              Search planets
-            </label>
+          <div className="border-t border-white/10 px-5 py-4">
+            <div className="mx-auto max-w-3xl">
+              <label
+                htmlFor="astronova-header-search"
+                className="mb-2 block text-sm text-slate-400"
+              >
+                Search planets and discoveries
+              </label>
+              <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4">
+                <Search size={18} className="shrink-0 text-yellow-400" />
+                <input
+                  id="astronova-header-search"
+                  value={headerSearch}
+                  onChange={(event) => setHeaderSearch(event.target.value)}
+                  placeholder="Try Mars, galaxies, or missions..."
+                  className="min-w-0 flex-1 bg-transparent py-3 outline-none placeholder:text-slate-500"
+                  autoFocus
+                />
+              </div>
 
-            <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-[#080B14] px-3">
-              <Search size={17} className="shrink-0 text-yellow-400" />
-              <input
-                id="planet-search"
-                autoFocus
-                value={searchTerm}
-                onChange={(event) => setSearchTerm(event.target.value)}
-                placeholder="Try Earth or Mars..."
-                className="w-full bg-transparent py-3 text-sm outline-none placeholder:text-slate-600"
-              />
-            </div>
+              {headerSearch.trim() && (
+                <div className="mt-3 space-y-2">
+                  {headerResults.length ? (
+                    headerResults.map((result, index) => (
+                      <button
+                        type="button"
+                        key={`${result.target}-${result.title}-${index}`}
+                        onClick={() => {
+  const matchedPlanet = planets.find(
+    (planet) =>
+      planet.name.toLowerCase() === result.title.toLowerCase()
+  );
 
-            <div className="mt-3 max-h-64 space-y-1 overflow-y-auto">
-              {!searchTerm.trim() ? (
-                <p className="py-3 text-sm text-slate-500">
-                  Type a planet name to search.
-                </p>
-              ) : filteredPlanets.length ? (
-                filteredPlanets.map((planet) => (
-                  <button
-                    key={planet.name}
-                    onClick={() => {
-                      setSearchOpen(false);
-                      setSearchTerm("");
-                      goToSection("planets");
-                      setTimeout(() => {
-                        document
-                          .getElementById(`planet-${planet.name.toLowerCase()}`)
-                          ?.scrollIntoView({
-                            behavior: "smooth",
-                            block: "center",
-                          });
-                      }, 350);
-                    }}
-                    className="flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left transition hover:bg-white/[0.06]"
-                  >
-                    <span
-                      className="h-3 w-3 rounded-full"
-                      style={{ backgroundColor: planet.color }}
-                    />
-                    <span className="text-sm font-semibold">
-                      {planet.name}
-                    </span>
-                    <ArrowUpRight
-                      size={15}
-                      className="ml-auto text-slate-500"
-                    />
-                  </button>
-                ))
-              ) : (
-                <p className="py-3 text-sm text-slate-400">
-                  No matching planets found.
-                </p>
+  if (matchedPlanet) {
+    setPlanetSearch(matchedPlanet.name);
+    goToSection("planets");
+  } else {
+    goToSection(result.target);
+  }
+}}
+                        className="flex w-full items-center justify-between gap-3 rounded-xl bg-white/5 p-3 text-left transition hover:bg-white/10"
+                      >
+                        <span>
+                          <span className="block font-semibold">
+                            {result.title}
+                          </span>
+                          <span className="mt-1 block text-sm text-slate-400">
+                            {result.description}
+                          </span>
+                        </span>
+                        <ArrowUpRight
+                          size={18}
+                          className="shrink-0 text-yellow-400"
+                        />
+                      </button>
+                    ))
+                  ) : (
+                    <p className="py-3 text-sm text-slate-400">
+                      No matching results. The universe is large, but this
+                      search is not psychic.
+                    </p>
+                  )}
+                </div>
               )}
             </div>
           </div>
         )}
+
+        {menuOpen && (
+          <nav className="border-t border-white/10 px-5 py-4 md:hidden">
+            <div className="mx-auto flex max-w-7xl flex-col gap-2">
+              {navItems.map((item) => (
+                <button
+                  type="button"
+                  key={item.id}
+                  onClick={() => goToSection(item.id)}
+                  className="rounded-lg px-3 py-3 text-left text-slate-300 hover:bg-white/5 hover:text-yellow-400"
+                >
+                  {item.label}
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={() => goToSection("my-journey")}
+                className="rounded-lg bg-yellow-400 px-3 py-3 text-left font-bold text-slate-950"
+              >My Journey
+              </button>
+            </div>
+          </nav>
+        )}
       </header>
 
       <main>
-        {/* Hero */}
-        <section id="home" className="relative isolate scroll-mt-24">
-          <div className="pointer-events-none absolute inset-0 -z-10">
-            <div className="absolute -right-32 top-10 h-[480px] w-[480px] rounded-full bg-indigo-600/[0.12] blur-[120px]" />
-            <div className="absolute -left-32 top-60 h-[360px] w-[360px] rounded-full bg-yellow-500/[0.06] blur-[120px]" />
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_35%,rgba(255,255,255,0.07)_0.5px,transparent_1px)] [background-size:28px_28px] opacity-40" />
-          </div>
-
-          <div className="mx-auto grid min-h-[640px] max-w-7xl items-center gap-10 px-5 py-16 sm:px-8 lg:grid-cols-[1.05fr_0.95fr] lg:px-12 lg:py-20">
-            <div className="relative z-10">
-              <div className="mb-7 inline-flex items-center gap-2 rounded-full border border-yellow-400/20 bg-yellow-400/[0.07] px-4 py-2 text-xs font-semibold tracking-wide text-yellow-300">
-                <Sparkles size={14} />
-                YOUR GATEWAY TO THE COSMOS
+        <section
+          id="home"
+          className="relative isolate flex min-h-[650px] items-center overflow-hidden bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: "url('/astronova-hero.png')" }}
+        >
+          <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_75%_35%,rgba(250,204,21,0.13),transparent_32%),radial-gradient(ellipse_at_20%_70%,rgba(59,130,246,0.12),transparent_38%)]" />
+          <div className="mx-auto grid w-full max-w-7xl items-center gap-12 px-5 py-20 lg:grid-cols-[1.1fr_0.9fr] lg:px-8 lg:py-28">
+            <div>
+              <div className="mb-7 inline-flex items-center gap-2 rounded-full border border-yellow-400/20 bg-yellow-400/5 px-4 py-2 text-sm text-yellow-300">
+                <Sparkles size={16} />
+                Your gateway to the cosmos
               </div>
 
-              <h1 className="max-w-2xl text-5xl font-black leading-[1.04] tracking-[-0.055em] sm:text-6xl lg:text-[76px]">
-                The universe
-                <br />
-                is yours to
-                <br />
-                <span className="relative inline-block text-yellow-400">
-                  discover.
-                  <svg
-                    className="absolute -bottom-2 left-0 w-full"
-                    viewBox="0 0 300 12"
-                    fill="none"
-                    aria-hidden="true"
-                  >
-                    <path
-                      d="M3 8C70 2 200 2 296 7"
-                      stroke="#FACC15"
-                      strokeWidth="3"
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                </span>
+              <h1 className="max-w-3xl text-5xl font-black leading-[1.08] tracking-tight sm:text-6xl lg:text-7xl">
+                Explore beyond
+                <span className="mt-2 block text-yellow-400">the ordinary.</span>
               </h1>
 
-              <p className="mt-8 max-w-lg text-base leading-8 text-slate-400 sm:text-lg">
-                From distant galaxies to the worlds next door, explore the
-                wonders of space through science, discovery, and curiosity.
+              <p className="mt-7 max-w-xl text-base leading-8 text-slate-400 sm:text-lg">
+                Discover planets, explore real space missions, learn astronomy,
+                and see our universe from a different perspective.
               </p>
 
-              <div className="mt-9 flex flex-wrap items-center gap-4">
+              <div className="mt-9 flex flex-wrap gap-3">
                 <button
+                  type="button"
+                  onClick={() => goToSection("discover")}
+                  className="inline-flex items-center gap-2 rounded-xl bg-yellow-400 px-6 py-3.5 font-bold text-slate-950 transition hover:bg-yellow-300"
+                >
+                  Start exploring <ArrowRight size={18} />
+                </button>
+                <button
+                  type="button"
                   onClick={() => goToSection("solar-system")}
-                  className="group flex items-center gap-3 rounded-xl bg-yellow-400 px-6 py-4 text-sm font-bold text-slate-950 transition hover:-translate-y-1 hover:bg-yellow-300"
+                  className="inline-flex items-center gap-2 rounded-xl border border-white/15 px-6 py-3.5 font-semibold transition hover:border-yellow-400/50 hover:bg-white/5"
                 >
-                  Explore the universe
-                  <ArrowRight
-                    size={18}
-                    className="transition-transform group-hover:translate-x-1"
-                  />
-                </button>
-
-                <button
-                  onClick={() => goToSection("planets")}
-                  className="flex items-center gap-3 rounded-xl border border-white/10 px-6 py-4 text-sm font-semibold text-slate-200 transition hover:border-white/30 hover:bg-white/[0.04]"
-                >
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full border border-white/20">
-                    <Play size={12} fill="currentColor" />
-                  </span>
-                  Meet the planets
+                  <Play size={17} /> Explore solar system
                 </button>
               </div>
-
-              <div className="mt-12 flex flex-wrap items-center gap-x-8 gap-y-4 border-t border-white/[0.08] pt-7">
-                {[
-                  ["8", "Planets"],
-                  ["100B+", "Galaxies estimated"],
-                  ["∞", "Questions to explore"],
-                ].map(([number, label]) => (
-                  <div key={label}>
-                    <div className="text-xl font-black tracking-tight text-white">
-                      {number}
-                    </div>
-                    <div className="mt-1 text-[11px] text-slate-500">
-                      {label}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="relative mx-auto flex w-full max-w-[530px] items-center justify-center py-8 lg:py-0">
-              <div className="absolute h-[340px] w-[340px] rounded-full bg-yellow-400/[0.06] blur-[80px] sm:h-[430px] sm:w-[430px]" />
-              <div className="absolute h-[310px] w-[310px] rounded-full border border-white/[0.07] sm:h-[420px] sm:w-[420px]" />
-              <div className="absolute h-[235px] w-[235px] rounded-full border border-white/[0.09] sm:h-[320px] sm:w-[320px]" />
-              <div className="absolute h-[160px] w-[160px] rounded-full border border-white/[0.10] sm:h-[220px] sm:w-[220px]" />
-
-              <div className="relative z-10 h-[290px] w-[290px] overflow-hidden rounded-full shadow-[0_0_100px_rgba(234,179,8,0.12)] sm:h-[400px] sm:w-[400px]">
-                <img
-                  src="https://images.unsplash.com/photo-1614732484003-ef9881555dc3?auto=format&fit=crop&w=900&q=90"
-                  alt="A planet in space"
-                  className="h-full w-full object-cover"
-                />
-                <div className="absolute inset-0 rounded-full border border-white/10" />
-              </div>
-
-              <div className="absolute left-0 top-[18%] z-20 flex items-center gap-3 rounded-2xl border border-white/10 bg-[#111827]/90 p-3 shadow-xl backdrop-blur-xl">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-yellow-400/10 text-yellow-400">
-                  <Telescope size={21} />
+              <div className="mt-12 grid max-w-lg grid-cols-3 gap-5 border-t border-white/10 pt-7">
+                <div>
+                  <p className="text-2xl font-black text-yellow-400">8</p>
+                  <p className="mt-1 text-xs text-slate-400 sm:text-sm">
+                    Planets
+                  </p>
                 </div>
                 <div>
-                  <div className="text-xs font-bold">Look closer.</div>
-                  <div className="mt-1 text-[10px] text-slate-400">
-                    Wonder is everywhere
-                  </div>
+                  <p className="text-2xl font-black text-yellow-400">∞</p>
+                  <p className="mt-1 text-xs text-slate-400 sm:text-sm">
+                    Discoveries
+                  </p>
                 </div>
-              </div>
-
-              <div className="absolute bottom-[14%] right-0 z-20 rounded-2xl border border-white/10 bg-[#111827]/90 p-4 shadow-xl backdrop-blur-xl">
-                <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-widest text-slate-400">
-                  <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
-                  Universe status
+                <div>
+                  <p className="text-2xl font-black text-yellow-400">1</p>
+                  <p className="mt-1 text-xs text-slate-400 sm:text-sm">
+                    Shared universe
+                  </p>
                 </div>
-                <div className="mt-2 text-lg font-black">
-                  Always expanding
-                </div>
-                <div className="mt-1 text-xs text-slate-500">
-                  Every discovery begins with a question.
-                </div>
-              </div>
-
-              <div className="absolute right-[13%] top-[8%] text-yellow-300">
-                <Sparkles size={23} />
-              </div>
-              <div className="absolute bottom-[12%] left-[12%] text-slate-300">
-                <Sparkles size={16} />
               </div>
             </div>
-          </div>
 
+            
+          </div>
           <button
+            type="button"
             onClick={() => goToSection("discover")}
-            className="mx-auto mb-10 flex w-fit items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 transition hover:text-yellow-400"
+            className="absolute bottom-5 left-1/2 hidden -translate-x-1/2 items-center gap-2 text-xs text-slate-500 transition hover:text-yellow-400 sm:flex"
           >
-            Scroll to discover <ArrowDown size={15} />
+            Scroll to explore <ArrowDown size={14} />
           </button>
         </section>
 
-        {/* Discover */}
-        <section
-          id="discover"
-          className="scroll-mt-24 border-y border-white/[0.06] bg-[#0B101B] py-24"
-        >
-          <div className="mx-auto max-w-7xl px-5 sm:px-8 lg:px-12">
-            <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
+        <section id="discover" className="scroll-mt-24 px-5 py-24 lg:px-8">
+          <div className="mx-auto max-w-7xl">
+            <div className="mb-12 flex flex-wrap items-end justify-between gap-5">
               <div>
-                <SectionLabel>Curiosity starts here</SectionLabel>
-                <h2 className="max-w-2xl text-3xl font-black tracking-tight sm:text-5xl">
-                  A universe of
-                  <span className="text-yellow-400"> possibilities.</span>
+                <p className="mb-3 text-sm font-bold uppercase tracking-[0.22em] text-yellow-400">
+                  Explore the unknown
+                </p>
+                <h2 className="text-3xl font-black sm:text-5xl">
+                  Your cosmic playground
                 </h2>
               </div>
-              <p className="max-w-md text-sm leading-7 text-slate-400">
-                Your journey through the cosmos starts with one question.
-                Choose a direction and let discovery lead the way.
+              <p className="max-w-md text-sm leading-7 text-slate-400 sm:text-base">
+                Learn by exploring, comparing, and testing what you know about
+                the universe.
               </p>
             </div>
 
-            <div className="mt-12 grid gap-5 md:grid-cols-3">
+            <div className="grid gap-5 md:grid-cols-3">
               {discoveries.map((item) => {
                 const Icon = item.icon;
 
                 return (
                   <button
+                    type="button"
                     key={item.number}
-                    onClick={() => goToSection(item.target.slice(1))}
-                    className="group relative overflow-hidden rounded-2xl border border-white/[0.08] bg-[#111827] p-7 text-left transition duration-300 hover:-translate-y-1 hover:border-yellow-400/40 sm:p-8"
+                    onClick={() => goToSection(item.target)}
+                    className="group rounded-2xl border border-white/10 bg-white/[0.025] p-6 text-left transition duration-300 hover:-translate-y-1 hover:border-yellow-400/40 hover:bg-white/[0.05] sm:p-8"
                   >
-                    <div className="absolute -right-8 -top-8 h-36 w-36 rounded-full bg-yellow-400/[0.04] blur-3xl transition group-hover:bg-yellow-400/[0.12]" />
-
-                    <div className="relative flex items-start justify-between">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-yellow-400/20 bg-yellow-400/[0.08] text-yellow-400">
+                    <div className="mb-8 flex items-center justify-between">
+                      <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-yellow-400/10 text-yellow-400">
                         <Icon size={23} />
-                      </div>
-                      <span className="text-sm font-bold text-slate-600">
+                      </span>
+                      <span className="text-sm text-slate-600">
                         {item.number}
                       </span>
                     </div>
-
-                    <div className="relative mt-10">
-                      <div className="text-[10px] font-bold tracking-[0.2em] text-yellow-400">
-                        {item.label}
-                      </div>
-                      <h3 className="mt-3 text-xl font-bold">{item.title}</h3>
-                      <p className="mt-3 text-sm leading-7 text-slate-400">
-                        {item.description}
-                      </p>
-                    </div>
-
-                    <div className="relative mt-7 flex items-center gap-2 text-sm font-semibold text-slate-300 transition group-hover:text-yellow-400">
-                      Explore more
-                      <ArrowUpRight
-                        size={16}
-                        className="transition-transform group-hover:translate-x-1 group-hover:-translate-y-1"
-                      />
-                    </div>
+                    <h3 className="text-xl font-bold">{item.title}</h3>
+                    <p className="mt-3 text-sm leading-7 text-slate-400">
+                      {item.description}
+                    </p>
+                    <span className="mt-7 inline-flex items-center gap-2 text-sm font-semibold text-yellow-400">
+                      Explore <ArrowUpRight size={16} />
+                    </span>
                   </button>
                 );
               })}
             </div>
           </div>
         </section>
-
-        {/* Interactive Solar System */}
-        <section
-          id="solar-system"
-          className="scroll-mt-24 border-y border-white/[0.06] bg-[#080B14] py-20"
-        >
-          <div className="mx-auto max-w-7xl px-5 sm:px-8 lg:px-12">
-            <div className="mb-8">
-              <SectionLabel>Explore in three dimensions</SectionLabel>
-              <h2 className="text-3xl font-black tracking-tight sm:text-5xl">
-                Your window into{" "}
-                <span className="text-yellow-400">the solar system.</span>
-              </h2>
-              <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-400">
-                Rotate the scene, zoom into the planets, and select a world to
-                discover more about our cosmic neighborhood.
-              </p>
-            </div>
-
+        <section id="solar-system" className="scroll-mt-24 px-5 py-20 lg:px-8">
+          <div className="mx-auto max-w-7xl">
             <SolarSystem3D />
           </div>
         </section>
 
-        {/* Planets */}
-        <section
-          id="planets"
-          className="scroll-mt-24 border-y border-white/[0.06] bg-[#0B101B] py-24"
-        >
-          <div className="mx-auto max-w-7xl px-5 sm:px-8 lg:px-12">
-            <SectionLabel>Meet our neighbors</SectionLabel>
-            <h2 className="text-3xl font-black tracking-tight sm:text-5xl">
-              Meet the <span className="text-yellow-400">planets.</span>
-            </h2>
-            <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-400">
-              Explore some of the worlds in our solar system and save your
-              favorites for later.
-            </p>
+        <section id="planet-comparison" className="scroll-mt-24 px-5 py-20 lg:px-8">
+          <div className="mx-auto max-w-7xl">
+            <PlanetComparison />
+          </div>
+        </section>
 
-            <div className="mt-8">
-              <PlanetComparison />
+        <section id="planets" className="scroll-mt-24 px-5 py-20 lg:px-8">
+          <div className="mx-auto max-w-7xl">
+            <div className="mb-10 flex flex-wrap items-end justify-between gap-5">
+              <div>
+                <p className="mb-3 text-sm font-bold uppercase tracking-[0.2em] text-yellow-400">
+                  Meet our neighbors
+                </p>
+                <h2 className="text-3xl font-black sm:text-5xl">
+                  The eight planets
+                </h2>
+                <p className="mt-3 max-w-2xl text-slate-400">
+                  Browse the planets and save your favorites for your next visit.
+                </p>
+              </div>
+
+              <div className="flex w-full items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 sm:w-80">
+                <Search size={18} className="shrink-0 text-slate-400" />
+                <input
+                  value={planetSearch}
+                  onChange={(event) => setPlanetSearch(event.target.value)}
+                  placeholder="Search all 8 planets..."
+                  aria-label="Search planets"
+                  className="min-w-0 flex-1 bg-transparent py-3 outline-none placeholder:text-slate-500"
+                />
+                {planetSearch && (
+                  <button
+                    type="button"
+                    onClick={() => setPlanetSearch("")}
+                    aria-label="Clear planet search"
+                    className="text-slate-400 hover:text-white"
+                  >
+                    <X size={17} />
+                  </button>
+                )}
+              </div>
             </div>
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+              {filteredPlanets.map((planet) => {
+                const isSaved = savedPlanets.includes(planet.name);
 
-            <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-              {planets
-                .filter((planet) =>
-                  planet.name
-                    .toLowerCase()
-                    .includes(searchTerm.trim().toLowerCase())
-                )
-                .map((planet) => {
-                  const saved = savedPlanets.includes(planet.name);
-
-                  return (
-                    <article
-                      id={`planet-${planet.name.toLowerCase()}`}
-                      key={planet.name}
-                      className="scroll-mt-28 overflow-hidden rounded-2xl border border-white/10 bg-[#111827] transition hover:-translate-y-1 hover:border-yellow-400/30"
-                    >
-                      <div className="relative h-44 overflow-hidden bg-[#080B14]">
-                        <img
-                          src={planet.image}
-                          alt={planet.name}
-                          loading="lazy"
-                          decoding="async"
-                          className="h-full w-full object-cover transition duration-500 hover:scale-105"
-                          onError={(event) => {
-                            event.currentTarget.style.opacity = "0";
-                          }}
+                return (
+                  <article
+                    key={planet.name}
+                    className="group overflow-hidden rounded-2xl border border-white/10 bg-white/[0.025] transition hover:-translate-y-1 hover:border-yellow-400/30"
+                  >
+                    <div className="relative flex h-44 items-center justify-center overflow-hidden bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.07),transparent_70%)]">
+                      <div
+                        className={`absolute h-28 w-28 rounded-full bg-gradient-to-br ${planet.color} opacity-20 blur-2xl transition group-hover:opacity-40`}
+                      />
+                      <div
+                        className={`relative flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br ${planet.color} text-5xl shadow-2xl transition duration-500 group-hover:scale-110`}
+                      >
+                        {planet.icon}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => toggleSavedPlanet(planet.name)}
+                        aria-label={
+                          isSaved
+                            ? `Remove ${planet.name} from favorites`
+                            : `Save ${planet.name} to favorites`
+                        }
+                        className={`absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-xl border transition ${
+                          isSaved
+                            ? "border-yellow-400/40 bg-yellow-400 text-slate-950"
+                            : "border-white/10 bg-black/20 text-slate-300 hover:border-yellow-400/40 hover:text-yellow-400"
+                        }`}
+                      >
+                        <Bookmark
+                          size={18}
+                          fill={isSaved ? "currentColor" : "none"}
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-[#111827] to-transparent" />
-                        <button
-                          onClick={() => toggleSavedPlanet(planet.name)}
-                          aria-label={
-                            saved
-                              ? `Remove ${planet.name} from favorites`
-                              : `Save ${planet.name} to favorites`
-                          }
-                          className={`absolute right-3 top-3 rounded-xl border p-2 transition ${
-                            saved
-                              ? "border-yellow-400 bg-yellow-400 text-slate-950"
-                              : "border-white/20 bg-black/40 text-white hover:border-yellow-400 hover:text-yellow-400"
-                          }`}
-                        >
-                          <Bookmark
-                            size={17}
-                            fill={saved ? "currentColor" : "none"}
-                          />
-                        </button>
-                        <div className="absolute bottom-3 left-4">
-                          <span
-                            className="text-xs font-bold uppercase tracking-widest"
-                            style={{ color: planet.color }}
-                          >
-                            {planet.type}
-                          </span>
-                          <h3 className="mt-1 text-2xl font-black">
-                            {planet.name}
-                          </h3>
-                        </div>
-                      </div>
+                      </button>
+                    </div>
 
-                      <div className="p-5">
-                        <p className="min-h-[72px] text-sm leading-6 text-slate-400">
-                          {planet.description}
+                    <div className="p-5">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-yellow-400">
+                        {planet.type}
+                      </p>
+                      <h3 className="mt-2 text-xl font-bold">{planet.name}</h3>
+                      <p className="mt-3 min-h-[72px] text-sm leading-6 text-slate-400">
+                        {planet.description}
+                      </p>
+                      <div className="mt-4 border-t border-white/10 pt-4">
+                        <p className="text-xs text-slate-500">
+                          Average distance from the Sun
                         </p>
-                        <div className="mt-4 grid grid-cols-2 gap-3 border-t border-white/10 pt-4">
-                          <div>
-                            <div className="text-xs text-slate-500">
-                              From the Sun
-                            </div>
-                            <div className="mt-1 text-sm font-bold">
-                              {planet.distance}
-                            </div>
-                          </div>
-                          <div>
-                            <div className="text-xs text-slate-500">Moons</div>
-                            <div className="mt-1 text-sm font-bold">
-                              {planet.moons}
-                            </div>
-                          </div>
-                        </div>
+                        <p className="mt-1 text-sm font-semibold text-slate-200">
+                          {planet.distance}
+                        </p>
                       </div>
-                    </article>
-                  );
-                })}
-            </div>
+                    </div>
+                  </article>
+                );
+              })}
+              </div>
 
-            {planets.filter((planet) =>
-              planet.name
-                .toLowerCase()
-                .includes(searchTerm.trim().toLowerCase())
-            ).length === 0 && (
-              <p className="mt-8 text-center text-slate-400">
-                No planets match your search.
-              </p>
-            )}
-
-            {searchTerm && (
-              <button
-                onClick={() => setSearchTerm("")}
-                className="mt-6 rounded-lg border border-white/10 px-4 py-2 text-sm text-yellow-400 hover:bg-white/5"
-              >
-                Clear planet search
-              </button>
+            {filteredPlanets.length === 0 && (
+              <div className="rounded-2xl border border-white/10 p-10 text-center">
+                <p className="font-semibold">No planets found.</p>
+                <p className="mt-2 text-sm text-slate-400">
+                  Try a planet name such as Jupiter or Neptune.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setPlanetSearch("")}
+                  className="mt-5 rounded-xl bg-yellow-400 px-4 py-2 font-bold text-slate-950"
+                >
+                  Clear search
+                </button>
+              </div>
             )}
           </div>
         </section>
 
-        {/* Astronomy and challenges */}
-        <section id="astronomy-picture" className="scroll-mt-24">
-          <AstronomyPicture />
+        <section id="astronomy-picture" className="scroll-mt-24 px-5 py-20 lg:px-8">
+          <div className="mx-auto max-w-7xl">
+            <AstronomyPicture />
+          </div>
         </section>
 
-        <section id="cosmic-challenge" className="scroll-mt-24">
-          <CosmicChallenge />
+        <section id="cosmic-challenge" className="scroll-mt-24 px-5 py-20 lg:px-8">
+          <div className="mx-auto max-w-7xl">
+            <CosmicChallenge />
+          </div>
         </section>
 
-        {/* User journey */}
-        <section
-          id="my-journey"
-          className="scroll-mt-24 border-y border-white/[0.06]"
-        >
-          <MyCosmicJourney />
+        <section id="my-journey" className="scroll-mt-24 px-5 py-20 lg:px-8">
+          <div className="mx-auto max-w-7xl">
+            <MyCosmicJourney />
+          </div>
+        </section>
+        <MissionControl />
+
+        <CosmicDiscovery />
+
+        <CosmicWeather />
+
+        <section id="profile" className="scroll-mt-24 px-5 py-20 lg:px-8">
+          <div className="mx-auto max-w-7xl">
+            <CosmicProfile />
+          </div>
         </section>
 
-        {/* Missions */}
-        <section
-          id="missions"
-          className="scroll-mt-24 border-y border-white/[0.06]"
-        >
-          <MissionControl />
-        </section>
-
-        {/* Discovery */}
-        <section id="cosmic-discovery" className="scroll-mt-24">
-          <CosmicDiscovery />
-        </section>
-
-        {/* Space weather and news */}
-        <section id="cosmic-weather" className="scroll-mt-24">
-          <CosmicWeather />
-        </section>
-
-        <section id="space-news" className="scroll-mt-24">
-          {/*<SpaceNews /> */} 
-        </section>
-
-        <section id="cosmic-profile" className="scroll-mt-24">
-          <CosmicProfile />
-        </section>
-        
-        {/* Final CTA */}
-        <section
-          id="begin-journey"
-          className="relative scroll-mt-24 overflow-hidden py-24"
-        >
-          <div className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-72 w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-yellow-400/[0.07] blur-[100px]" />
-
-          <div className="mx-auto max-w-4xl px-5 text-center sm:px-8">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-yellow-400/20 bg-yellow-400/10 text-yellow-400">
-              <Atom size={27} />
+        <section className="px-5 py-20 lg:px-8">
+          <div className="mx-auto max-w-5xl overflow-hidden rounded-3xl border border-yellow-400/20 bg-[radial-gradient(ellipse_at_top,rgba(250,204,21,0.12),transparent_55%),rgba(255,255,255,0.025)] px-6 py-14 text-center sm:px-12">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-yellow-400 text-slate-950">
+              <Telescope size={28} />
             </div>
-
-            <div className="mt-6">
-              <SectionLabel>Keep looking up</SectionLabel>
-            </div>
-
-            <h2 className="text-3xl font-black leading-tight tracking-tight sm:text-5xl">
-              Every great discovery
-              <br />
-              <span className="text-yellow-400">starts with curiosity.</span>
+            <h2 className="mt-6 text-3xl font-black sm:text-5xl">
+              The universe is waiting.
             </h2>
-
-            <p className="mx-auto mt-5 max-w-xl text-sm leading-7 text-slate-400 sm:text-base">
-              The cosmos is full of unanswered questions. Stay curious, keep
-              exploring, and discover something new every day.
+            <p className="mx-auto mt-5 max-w-xl leading-7 text-slate-400">
+              Keep exploring, learn something new, and make your next cosmic
+              discovery.
             </p>
-
             <button
-              onClick={() => goToSection("my-journey")}
-              className="mt-8 inline-flex items-center gap-3 rounded-xl bg-yellow-400 px-6 py-4 text-sm font-bold text-slate-950 transition hover:-translate-y-1 hover:bg-yellow-300"
+              type="button"
+              onClick={() => goToSection("discover")}
+              className="mt-8 inline-flex items-center gap-2 rounded-xl bg-yellow-400 px-6 py-3.5 font-bold text-slate-950 transition hover:bg-yellow-300"
             >
-              Begin your journey <ArrowRight size={18} />
+              Explore again <ArrowRight size={18} />
             </button>
           </div>
         </section>
       </main>
 
-      <footer className="border-t border-white/[0.07] bg-[#060810] px-5 py-8">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 text-center sm:flex-row sm:text-left">
+      <footer className="border-t border-white/10 px-5 py-8 lg:px-8">
+        <div className="mx-auto flex max-w-7xl flex-col justify-between gap-4 text-sm text-slate-500 sm:flex-row sm:items-center">
           <button
+            type="button"
             onClick={() => goToSection("home")}
-            className="text-lg font-black tracking-tight"
+            className="flex items-center gap-2 self-start font-bold text-slate-200"
           >
-            ASTRO<span className="text-yellow-400">NOVA</span>
+            <Orbit size={18} className="text-yellow-400" />
+            Astronova
           </button>
-          <p className="text-xs text-slate-500">
-            Explore beyond. Learn more about our universe.
-          </p>
-          <button
-            onClick={() => goToSection("home")}
-            className="text-xs text-slate-400 transition hover:text-yellow-400"
-          >
-            Back to top ↑
-          </button>
+          <p>Explore space. Stay curious. Keep looking up.</p>
+          <p>Educational project · React + Tailwind CSS</p>
         </div>
       </footer>
     </div>
